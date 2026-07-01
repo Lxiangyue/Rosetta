@@ -1,0 +1,73 @@
+# ==============================================================================
+# Stage 2.2: Full MMU Training (MMU + LM) - MoT Baseline
+# Continue from Stage 2.1 projector checkpoint, train projector + backbone.
+# Uses MMU conversation data + LM data.
+#
+# Usage:
+#   bash scripts/run/run_stage2_2_mmu_mot.sh
+# Override paths via environment variables:
+#   CKPT_DIR   — Stage 2.1 projector checkpoint
+#   OUTPUT_DIR — Training output directory
+# ==============================================================================
+
+__GLOBAL_VARS__:
+  _DEFAULT_ASSETS_BASE: ./public_assets
+  ASSETS_BASE: ${oc.env:ASSETS_BASE,${__GLOBAL_VARS__._DEFAULT_ASSETS_BASE}}
+
+MODEL_ARGS:
+  model-name: multimodal.qwen3-06b-mot
+  model-structure: MultimodalModel
+  max-position-embeddings: 32768
+  seq-length: 8192
+  init-device: cpu
+  autocast-dtype: bf16
+  enabled:
+    - bf16
+EXTRA_MODEL_ARGS:
+  enabled:
+    - use-vit
+    - vit-frozen
+  # No lm-frozen: backbone trains in Stage 2.2
+  vit-type: qwen3vl-vit-for-0.6b
+  __FROZEN__EXTRA_MODEL_ARGS:
+    vit_config:
+      attn_implementation: flash_attention_2
+      spatial_merge_size: 2
+
+DATA_ARGS:
+  tokenizer-name: qwen3-0.6b-base
+  tokenizer-class: tokenizer.Qwen3BaseTokenizerFast
+  sequence-template: instruct
+  modality:
+    - text
+    - vit_image
+  lm_task_kwargs: {}
+  mmu_task_kwargs: {}
+  # Stage 2.2: MMU + LM data (80% MMU, 20% LM)
+  data-weights: '{"mmu": 0.8, "lm": 0.2}'
+  max-seq-len: 8192
+  lm-data: example_data/lm/conversation_58k.json
+  mmu-data: example_data/mmu/llava_ov_si.jsonl
+  mmu-image-dir: example_data/mmu/images
+
+# ==============================================================================
+# Training hyperparameters for Stage 2.2 Full MMU (MoT)
+# ==============================================================================
+TRAIN_ARGS:
+  enabled: []
+  lr: 2e-5
+  min-lr: 1e-6
+  adam-beta1: 0.9
+  adam-beta2: 0.95
+  max-steps: 20000
+  warmup-steps: 1000
+  lr-decay-steps: 20000
+  weight-decay: 0.1
+  grad-clip: 1.0
+  log-interval: 1
+  save-interval: 1000
+  gradient-accumulation-steps: 1
+  moe-aux-loss-coeff: 0.01
+  sharding-strategy: HYBRID_SHARD
+  num-shard: 8
+  seed: 1234

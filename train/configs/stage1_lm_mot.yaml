@@ -1,0 +1,59 @@
+# ==============================================================================
+# Stage 1: Language Model Training (Text-Only) - MoT precursor
+# Train the und-only 7-expert checkpoint before Stage 3 expands it to MoT.
+#
+# Usage:
+#   bash scripts/run/run_stage1_lm_mot.sh
+# Override paths via environment variables:
+#   CKPT_DIR   — Upcycled MoT checkpoint from Stage 0
+#   OUTPUT_DIR — Training output directory
+# ==============================================================================
+
+__GLOBAL_VARS__:
+  _DEFAULT_ASSETS_BASE: ./public_assets
+  ASSETS_BASE: ${oc.env:ASSETS_BASE,${__GLOBAL_VARS__._DEFAULT_ASSETS_BASE}}
+
+MODEL_ARGS:
+  model-name: multimodal.qwen3-06b-base-mot-lm
+  model-structure: MultimodalModel
+  max-position-embeddings: 32768
+  seq-length: 32768
+  init-device: cpu
+  autocast-dtype: bf16
+  enabled:
+    - bf16
+EXTRA_MODEL_ARGS:
+  enabled: []  # No VAE/VIT in Stage 1
+
+DATA_ARGS:
+  tokenizer-name: qwen3-0.6b-base
+  tokenizer-class: tokenizer.Qwen3BaseTokenizerFast
+  sequence-template: pretrain
+  modality:
+    - text
+  lm_task_kwargs: {}
+  data-weights: '{"lm": 1.0}'
+  max-seq-len: 32768
+  lm-data: example_data/lm/conversation_58k.json
+
+# ==============================================================================
+# Training hyperparameters for Stage 1 LM (MoT)
+# ==============================================================================
+TRAIN_ARGS:
+  enabled: []
+  lr: 1e-4
+  min-lr: 3e-5
+  adam-beta1: 0.9
+  adam-beta2: 0.95
+  max-steps: 35000
+  warmup-steps: 500
+  lr-decay-steps: 100000000
+  weight-decay: 0.1
+  grad-clip: 1.0
+  log-interval: 1
+  save-interval: 1000
+  gradient-accumulation-steps: 1
+  moe-aux-loss-coeff: 0.01
+  sharding-strategy: HYBRID_SHARD
+  num-shard: 8
+  seed: 1234

@@ -1,0 +1,94 @@
+# ==============================================================================
+# Stage 3 multimodal training for MoE: continue from Stage 2 VLM checkpoint,
+# add T2I training while maintaining LM and MMU capabilities.
+# MoE variant uses standard DeepSeek MoE architecture (without MAOP/shared expert).
+#
+# Usage:
+#   bash scripts/run/run_train_moe.sh
+# Override paths via environment variables:
+#   CKPT_DIR  — Stage 2 MoE init checkpoint (HF safetensors)
+#   OUTPUT    — Training output directory
+# ==============================================================================
+
+__GLOBAL_VARS__:
+  _DEFAULT_ASSETS_BASE: ./public_assets
+  ASSETS_BASE: ${oc.env:ASSETS_BASE,${__GLOBAL_VARS__._DEFAULT_ASSETS_BASE}}
+
+MODEL_ARGS:
+  model-name: multimodal.qwen3-06b-upcycling-moe-mm-deepseek
+  model-structure: MultimodalModel
+  max-position-embeddings: 32768
+  seq-length: 8192
+  init-device: cpu
+  autocast-dtype: bf16
+  enabled:
+    - bf16
+EXTRA_MODEL_ARGS:
+  enabled:
+    - use-vae
+    - use-vit
+    - vit-frozen          # ViT weights frozen during Stage 3
+  vae-type: 16x16-128c-flux2
+  vae-latent-dim: 128
+  vae-precision: fp32
+  vae-autocast-dtype: fp32
+  vit-type: qwen3vl-vit-for-0.6b
+  __FROZEN__EXTRA_MODEL_ARGS:
+    vit_config:
+      attn_implementation: flash_attention_2
+      spatial_merge_size: 2
+
+DENOISE_ARGS:
+  flow-snr-type: lognorm
+  flow-reverse: true
+  flow-shift: 1.0
+DATA_ARGS:
+  tokenizer-name: qwen3-0.6b-base
+  tokenizer-class: tokenizer.Qwen3BaseTokenizerFast
+  add-timestep-token: false
+  add-image-shape-token: false
+  sequence-template: instruct
+  modality:
+    - text
+    - vae_image
+    - vit_image
+  # Optional task-specific arguments used for data routing
+  t2i_task_kwargs: {}
+  lm_task_kwargs: {}
+  mmu_task_kwargs: {}
+  # Data mixing ratios
+  data-weights: '{"lm": 0.15, "mmu": 0.25, "t2i": 0.60}'
+  max-seq-len: 8192
+  # Default data paths (override via command line)
+  lm-data: example_data/lm/conversation_58k.json
+  mmu-data: example_data/mmu/llava_ov_si.jsonl
+  mmu-image-dir: example_data/mmu/images
+  t2i-data: example_data/t2i
+
+
+# ==============================================================================
+# Training hyperparameters for MoE
+# Note: MoE uses standard DeepSeek architecture:
+#   - No MAOP (no --use-orth flag)
+#   - No Shield Step (no modality-aware gradient blocking)
+#   - No Differential LR (uniform learning rate for all parameters)
+#   - Higher unified LR (1e-4) compared to Rosetta's base LR (1e-5)
+# ==============================================================================
+TRAIN_ARGS:
+  lr: 1e-4
+  min-lr: 1e-5
+  adam-beta1: 0.9
+  adam-beta2: 0.95
+  max-steps: 400000
+  warmup-steps: 1000
+  lr-decay-steps: 100000000
+  weight-decay: 0.1
+  grad-clip: 1.0
+  log-interval: 1
+  save-interval: 2500
+  gradient-accumulation-steps: 1
+  image-loss-weight: 1.0
+  moe-aux-loss-coeff: 0.01
+  sharding-strategy: HYBRID_SHARD
+  num-shard: 8
+  seed: 1234
