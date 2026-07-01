@@ -17,7 +17,9 @@
   &nbsp;
   <img src="https://img.shields.io/badge/License-Apache%202.0-green" alt="License"/>
   &nbsp;
-  <img src="https://img.shields.io/github/stars/Lxiangyue/Rosetta?style=social" alt="Stars"/>
+  <a href="https://github.com/Lxiangyue/Rosetta">
+    <img src="https://img.shields.io/github/stars/Lxiangyue/Rosetta?style=social&v=1" alt="Stars"/>
+  </a>
 </p>
 
 <p align="center">
