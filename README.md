@@ -7,7 +7,7 @@
     <img src="https://img.shields.io/badge/Rosetta-Website-2F6DBD?style=flat" alt="Rosetta Website"/>
   </a>
  &nbsp;
-  <a href="https://arxiv.org/abs/XXXX.XXXXX">
+  <a href="https://arxiv.org/abs/2607.00293">
     <img src="https://img.shields.io/badge/Paper-arXiv-b5212f?logo=arxiv&logoColor=red" alt="Paper"/>
   </a>
   &nbsp;
@@ -233,14 +233,16 @@ We provide scripts for evaluating 11 benchmarks covering LM, VLM, and T2I tasks,
 
 ---
 
-## ✍️ Citation (Coming Soon)
+## ✍️ Citation
 ```bibtex
-@article{liu2026rosetta,
-  title   = {Rosetta: Composable Native Multimodal Pretraining},
-  author  = {Liu, Xiangyue and Zhang, Zijian and Yang, Miles and Zhong, Zhao and Bo, Liefeng and Tan, Ping},
-  journal = {TODO},
-  year    = {2026},
-  url     = {https://arxiv.org/abs/XXXX.XXXXX}
+@misc{liu2026rosettacomposablenativemultimodal,
+      title={Rosetta: Composable Native Multimodal Pretraining}, 
+      author={Xiangyue Liu and Zijian Zhang and Miles Yang and Zhao Zhong and Liefeng Bo and Ping Tan},
+      year={2026},
+      eprint={2607.00293},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2607.00293}, 
 }
 ```
 
