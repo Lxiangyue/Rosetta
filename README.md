@@ -16,10 +16,10 @@
   </a>
   &nbsp;
   <img src="https://img.shields.io/badge/License-Apache%202.0-green" alt="License"/>
-  &nbsp;
+  <!-- &nbsp;
   <a href="https://github.com/Lxiangyue/Rosetta">
     <img src="https://img.shields.io/github/stars/Lxiangyue/Rosetta?style=social&v=1" alt="Stars"/>
-  </a>
+  </a> -->
 </p>
 
 <p align="center">
